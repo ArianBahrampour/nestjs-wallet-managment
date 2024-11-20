@@ -42,4 +42,30 @@ export class WalletService {
     ); // Token ID for USDT
     return { txId: transaction.txid };
   }
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async checkWithdrawalTransactions() {
+    this.logger.log('Checking withdrawal transaction statuses...');
+
+    const pendingWithdrawals = await this.walletRepository.find({
+      where: { status: 'PENDING' },
+    });
+
+    for (const withdrawal of pendingWithdrawals) {
+      const transaction = await this.tronWeb.trx.getTransaction(
+        withdrawal.txId,
+      );
+
+      if (transaction.ret[0].contractRet === 'SUCCESS') {
+        withdrawal.status = 'COMPLETED';
+      } else {
+        withdrawal.status = 'FAILED';
+      }
+
+      await this.walletRepository.save(withdrawal);
+      this.logger.log(
+        `Updated status for transaction ${withdrawal.txId}: ${withdrawal.status}`,
+      );
+    }
+  }
 }

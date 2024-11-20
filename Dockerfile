@@ -64,7 +64,7 @@ COPY --from=build /usr/src/app/dist ./dist
 
 
 # Expose the port that the application listens on.
-EXPOSE 3000
+EXPOSE 8000
 
 # Run the application.
-CMD yarn start
+ENTRYPOINT [ "node", "dist/index.js" ] 

@@ -2,20 +2,28 @@ import { Controller, Post, Get, Body, Query } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { TransactionsDto } from 'src/common/dto/transaction.dto';
 import { WithdrawDto } from 'src/common/dto/withdraw.dto';
-import { CreateWalletDto } from 'src/common/dto/create-wallet.dto';
+import { Response } from 'src/common/dto/response.dto';
 
-@Controller('/api')
+@Controller('/')
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
   @Post('/generate-api-key')
-  generateApiKey(): { apiKey: string } {
-    return { apiKey: this.walletService.generateApiKey() };
+  generateApiKey(): Response {
+    return {
+      status: 200,
+      message: 'API key generated',
+      data: { apiKey: this.walletService.generateApiKey() },
+    };
   }
 
   @Post('/create-wallet')
-  async createWallet(): Promise<CreateWalletDto> {
-    return await this.walletService.createWallet();
+  async createWallet(): Promise<Response> {
+    return {
+      status: 200,
+      message: 'Wallet created',
+      data: await this.walletService.createWallet(),
+    };
   }
 
   @Get('/transactions')
