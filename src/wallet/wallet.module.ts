@@ -11,7 +11,7 @@ import { EnergyModule } from '../energy/energy.module'; // Import the EnergyModu
   imports: [
     TypeOrmModule.forFeature([WalletEntity, UserEntity]),
     UserModule,
-    EnergyModule, // Import EnergyModule to use EnergyService
+    EnergyModule,
   ],
   controllers: [WalletController],
   providers: [WalletService],

@@ -8,6 +8,7 @@ import { WalletEntity } from './wallet.entity';
 import { Repository } from 'typeorm';
 import { UserEntity } from 'src/user/user.entity';
 import { EnergyService } from 'src/energy/energy.service';
+import { TransactionEntity } from './transaction.entity';
 
 @Injectable()
 export class WalletService {
@@ -19,10 +20,13 @@ export class WalletService {
     private walletRepository: Repository<WalletEntity>,
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
+    @InjectRepository(TransactionEntity)
+    private transactionRepository: Repository<TransactionEntity>,
     private readonly energyService: EnergyService, // Inject EnergyService
   ) {
     this.tronWeb = new TronWeb({
       fullHost: process.env.TRON_FULL_HOST || 'https://api.trongrid.io',
+      headers: { 'TRON-PRO-API-KEY': '05a81fdd-1b56-4faa-b20b-e0d0eba9862e' },
       privateKey: process.env.MASTER_PRIVATE_KEY || '',
     });
   }
@@ -41,6 +45,17 @@ export class WalletService {
   async createWallet(
     user: UserEntity,
   ): Promise<{ address: string; privateKey: string }> {
+    const lastUserWallet = await this.walletRepository.findOne({
+      where: { userId: user.id },
+      order: { createdAt: 'DESC' },
+    });
+
+    if (lastUserWallet && !lastUserWallet.hasSuccessfulTransaction) {
+      throw new UnauthorizedException(
+        'Please complete the last transaction before creating a new wallet',
+      );
+    }
+
     const account = await this.tronWeb.createAccount();
     await this.walletRepository.save({
       userId: user.id,
@@ -54,8 +69,18 @@ export class WalletService {
     };
   }
 
-  async getTransactions(address: string): Promise<any[]> {
-    return await this.tronWeb.trx.getTransactionsRelated(address, 'to');
+  async getTransactions(user: UserEntity): Promise<any[]> {
+    const transactions = await this.transactionRepository.find({
+      where: { userId: user.id },
+    });
+    return transactions;
+  }
+
+  async getWallets(user: UserEntity): Promise<WalletEntity[]> {
+    return await this.walletRepository.find({
+      select: ['address', 'hasSuccessfulTransaction', 'createdAt'],
+      where: { userId: user.id },
+    });
   }
 
   async withdraw(
@@ -71,7 +96,15 @@ export class WalletService {
     }
 
     // Rent energy before initiating the withdrawal
-    await this.energyService.rentEnergy(32000, wallet.address, '', uuidv4());
+    const energy = await this.energyService.rentEnergy(
+      32000,
+      wallet.address,
+      '',
+      uuidv4(),
+    );
+    if (!energy) {
+      throw new UnauthorizedException('Failed to rent energy');
+    }
 
     // Perform the withdrawal
     this.tronWeb.setPrivateKey(wallet.privateKey);
@@ -80,6 +113,18 @@ export class WalletService {
       amount,
       '1002000',
     ); // Token ID for USDT
+
+    this.transactionRepository.save({
+      txId: transaction.txid,
+      fromAddress: wallet.address,
+      toAddress: toAddress,
+      amount: amount,
+      status: 'PENDING',
+      block: transaction.blockNumber,
+      user: user,
+      wallet: wallet,
+    });
+
     return { txId: transaction.txid };
   }
 
@@ -87,28 +132,20 @@ export class WalletService {
   async checkWalletTransactions(): Promise<void> {
     this.logger.log('Checking transactions for all wallets...');
 
-    const wallets = await this.walletRepository.find(); // Fetch all wallets
-    for (const wallet of wallets) {
-      try {
-        const transactions = await this.tronWeb.trx.getTransactionsRelated(
-          wallet.address,
-          'to',
+    const transactions = await this.transactionRepository.find({
+      where: { status: 'PENDING' },
+    });
+
+    for (const transaction of transactions) {
+      const result = await this.tronWeb.trx.getTransaction(transaction.txId);
+      if (result && result.ret && result.ret[0].contractRet === 'SUCCESS') {
+        await this.transactionRepository.update(
+          { id: transaction.id },
+          { status: 'SUCCESS' },
         );
-        if (transactions && transactions.length > 0) {
-          this.logger.log(
-            `Wallet ${wallet.address}: Found ${transactions.length} transactions`,
-          );
-          transactions.forEach((tx) => {
-            this.logger.log(
-              `Transaction ID: ${tx.txID}, Amount: ${tx.raw_data.contract[0].parameter.value.amount}`,
-            );
-          });
-        } else {
-          this.logger.log(`Wallet ${wallet.address}: No transactions found`);
-        }
-      } catch (error) {
-        this.logger.error(
-          `Error fetching transactions for wallet ${wallet.address}: ${error.message}`,
+        await this.walletRepository.update(
+          { id: transaction.wallet.id },
+          { hasSuccessfulTransaction: true },
         );
       }
     }

@@ -14,7 +14,7 @@ export class WalletAndUser1732099492903 implements MigrationInterface {
             isGenerated: true,
             generationStrategy: 'uuid',
           },
-          { name: 'email', type: 'varchar', isNullable: false, isUnique: true },
+          { name: 'email', type: 'varchar', isNullable: false },
           {
             name: 'apiKey',
             type: 'varchar',

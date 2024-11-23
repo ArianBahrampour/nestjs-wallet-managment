@@ -28,9 +28,22 @@ export class WalletController {
     };
   }
 
+  @Get('/wallets')
+  async getWallets(@Req() req: RequestWithUser): Promise<Response> {
+    return {
+      status: 200,
+      message: 'Wallets fetched',
+      data: await this.walletService.getWallets(req.user),
+    };
+  }
+
   @Get('/transactions')
-  async getTransactions(@Query() params: TransactionsDto): Promise<any[]> {
-    return await this.walletService.getTransactions(params.address);
+  async getTransactions(@Req() req: RequestWithUser): Promise<Response> {
+    return {
+      status: 200,
+      message: 'Transactions fetched',
+      data: await this.walletService.getTransactions(req.user),
+    };
   }
 
   @Post('/withdraw')

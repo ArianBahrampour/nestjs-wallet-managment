@@ -3,14 +3,13 @@ import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { WalletModule } from './wallet/wallet.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import * as dotenv from 'dotenv';
 import { ApiKeyMiddleware } from './middlewares/api-key.middleware';
 import { UserModule } from './user/user.module';
-dotenv.config();
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST || 'localhost',
@@ -21,6 +20,7 @@ dotenv.config();
       autoLoadEntities: true,
       synchronize: true,
     }),
+    ScheduleModule.forRoot(), 
     WalletModule,
     UserModule,
   ],

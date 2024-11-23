@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { WalletEntity } from '../wallet/wallet.entity';
+import { TransactionEntity } from 'src/wallet/transaction.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -14,4 +15,5 @@ export class UserEntity {
 
   @OneToMany(() => WalletEntity, (wallet) => wallet.user)
   wallets: WalletEntity[];
+  transactions: TransactionEntity[];
 }
