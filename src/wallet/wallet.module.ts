@@ -6,10 +6,11 @@ import { WalletEntity } from './wallet.entity';
 import { UserEntity } from '../user/user.entity';
 import { UserModule } from '../user/user.module';
 import { EnergyModule } from '../energy/energy.module'; // Import the EnergyModule
+import { TransactionEntity } from './transaction.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([WalletEntity, UserEntity]),
+    TypeOrmModule.forFeature([WalletEntity, UserEntity, TransactionEntity]),
     UserModule,
     EnergyModule,
   ],
