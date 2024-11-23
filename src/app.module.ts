@@ -1,9 +1,11 @@
 // src/app.module.ts
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { WalletModule } from './wallet/wallet.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as dotenv from 'dotenv';
+import { ApiKeyMiddleware } from './middlewares/api-key.middleware';
+import { UserModule } from './user/user.module';
 dotenv.config();
 
 @Module({
@@ -20,6 +22,14 @@ dotenv.config();
       synchronize: true,
     }),
     WalletModule,
+    UserModule,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(ApiKeyMiddleware)
+      .exclude({ path: '/generate-api-key', method: RequestMethod.ALL })
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}
