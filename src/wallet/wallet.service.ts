@@ -95,6 +95,10 @@ export class WalletService {
       throw new UnauthorizedException('Wallet not found');
     }
 
+    if (user.usdtBalance < amount) {
+      throw new UnauthorizedException('Insufficient balance');
+    }
+
     // Rent energy before initiating the withdrawal
     const energy = await this.energyService.rentEnergy(
       32000,
@@ -148,6 +152,32 @@ export class WalletService {
           { hasSuccessfulTransaction: true },
         );
       }
+    }
+  }
+
+  // Cronjob to update the USDT balance of all users
+  @Cron(CronExpression.EVERY_MINUTE)
+  async updateUSDTBalances(): Promise<void> {
+    this.logger.log('Updating USDT balances for all users...');
+    this.tronWeb.setAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t');
+    const usdtContractAddress = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+    const contract = await this.tronWeb.contract().at(usdtContractAddress);
+    const users = await this.userRepository.find();
+    for (const user of users) {
+      const wallets = await this.walletRepository.find({
+        where: { userId: user.id },
+      });
+
+      let usdtBalance = 0;
+      for (const wallet of wallets) {
+        const balance = await contract.methods.balanceOf(wallet.address).call();
+        usdtBalance += this.tronWeb.toDecimal(balance._hex) / 1000000;
+      }
+
+      await this.userRepository.update(
+        { id: user.id },
+        { usdtBalance: usdtBalance },
+      );
     }
   }
 }

@@ -46,6 +46,15 @@ export class WalletController {
     };
   }
 
+  @Get('/user')
+  async getUser(@Req() req: RequestWithUser): Promise<Response> {
+    return {
+      status: 200,
+      message: 'User fetched',
+      data: req.user,
+    };
+  }
+
   @Post('/withdraw')
   async withdraw(
     @Req() req: RequestWithUser, // Access user from the request object

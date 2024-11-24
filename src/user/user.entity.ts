@@ -13,6 +13,9 @@ export class UserEntity {
   @Column({ unique: true })
   apiKey: string;
 
+  @Column({ default: 0 })
+  usdtBalance: number;
+
   @OneToMany(() => WalletEntity, (wallet) => wallet.user)
   wallets: WalletEntity[];
   transactions: TransactionEntity[];
