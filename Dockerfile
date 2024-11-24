@@ -67,4 +67,4 @@ COPY --from=build /usr/src/app/dist ./dist
 EXPOSE 8000
 
 # Run the application.
-ENTRYPOINT [ "node", "dist/index.js" ] 
+ENTRYPOINT [ "node", "dist/main.js" ] 
