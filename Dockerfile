@@ -40,6 +40,7 @@ RUN --mount=type=bind,source=package.json,target=package.json \
 
 # Copy the rest of the source files into the image.
 COPY . .
+COPY .env .env
 # Run the build script.
 RUN yarn run build
 
@@ -57,14 +58,11 @@ USER node
 # Copy package.json so that package manager commands can be used.
 COPY package.json .
 
-# Copy .env file to the image.
-COPY --from=deps .env ./.env
-
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
-
+COPY --from=build /usr/src/app/.env .env
 
 # Expose the port that the application listens on.
 EXPOSE 8000

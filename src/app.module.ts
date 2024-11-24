@@ -20,7 +20,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       autoLoadEntities: true,
       synchronize: true,
     }),
-    ScheduleModule.forRoot(), 
+    ScheduleModule.forRoot(),
     WalletModule,
     UserModule,
   ],
