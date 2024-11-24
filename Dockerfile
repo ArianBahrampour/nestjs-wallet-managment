@@ -58,7 +58,7 @@ USER node
 COPY package.json .
 
 # Copy .env file to the image.
-COPY .env .
+COPY --from=deps /usr/src/app/.env ./.env
 
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
