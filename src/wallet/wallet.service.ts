@@ -172,12 +172,12 @@ export class WalletService {
       const wallets = await this.walletRepository.find({
         where: { userId: user.id },
       });
+      if (user.usdtBalance > 0) {
+        continue;
+      }
 
       let usdtBalance = 0;
       for (const wallet of wallets) {
-        if (user.usdtBalance > 0) {
-          continue;
-        }
         const balance = await contract.methods
           .balanceOf(this.tronWeb.address.toHex(wallet.address))
           .call();
