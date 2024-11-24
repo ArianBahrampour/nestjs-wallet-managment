@@ -125,8 +125,12 @@ export class WalletService {
       .transfer(this.tronWeb.address.toHex(toAddress), amount * 1000000)
       .send();
     console.log(transaction);
+    let txID = uuidv4();
+    if (transaction && transaction.txid) {
+      txID = transaction.txid;
+    }
     this.transactionRepository.save({
-      txId: transaction.txid,
+      txId: txID,
       fromAddress: wallet.address,
       toAddress: toAddress,
       amount: amount,
