@@ -99,6 +99,10 @@ export class WalletService {
       throw new UnauthorizedException('Insufficient balance');
     }
 
+    const usdtContractAddress = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+    const contract = await this.tronWeb.contract().at(usdtContractAddress);
+    const energyLimit = 1000000;
+
     // Rent energy before initiating the withdrawal
     const energy = await this.energyService.rentEnergy(
       32000,
@@ -112,11 +116,12 @@ export class WalletService {
 
     // Perform the withdrawal
     this.tronWeb.setPrivateKey(wallet.privateKey);
-    const transaction = await this.tronWeb.trx.sendToken(
-      toAddress,
-      amount,
-      '1002000',
-    ); // Token ID for USDT
+    const transaction = await contract.methods
+      .transfer(this.tronWeb.address.toHex(toAddress), amount * 1000000)
+      .send({
+        feeLimit: energyLimit,
+        energyLimit: 1000000,
+      });
 
     this.transactionRepository.save({
       txId: transaction.txid,
