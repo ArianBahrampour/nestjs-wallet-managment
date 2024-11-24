@@ -110,7 +110,7 @@ export class WalletService {
 
     // Rent energy before initiating the withdrawal
     const energy = await this.energyService.rentEnergy(
-      131000,
+      32000,
       wallet.address,
       '',
       uuidv4(),
@@ -123,10 +123,7 @@ export class WalletService {
     this.tronWeb.setPrivateKey(wallet.privateKey);
     const transaction = await contract.methods
       .transfer(this.tronWeb.address.toHex(toAddress), amount * 1000000)
-      .send({
-        feeLimit: energyLimit,
-        energyLimit: 1000000,
-      });
+      .send();
     console.log(transaction);
     this.transactionRepository.save({
       txId: transaction.txid,
