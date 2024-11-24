@@ -170,7 +170,9 @@ export class WalletService {
 
       let usdtBalance = 0;
       for (const wallet of wallets) {
-        const balance = await contract.methods.balanceOf(this.tronWeb.address.toHex(wallet.address).call();
+        const balance = await contract.methods
+          .balanceOf(this.tronWeb.address.toHex(wallet.address))
+          .call();
         console.log(balance);
         usdtBalance += this.tronWeb.toDecimal(balance._hex) / 1000000;
       }
