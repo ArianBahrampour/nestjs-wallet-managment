@@ -125,17 +125,14 @@ export class WalletService {
       .transfer(this.tronWeb.address.toHex(toAddress), amount * 1000000)
       .send();
     console.log(transaction);
-    let txID = uuidv4();
-    if (transaction && transaction.txid) {
-      txID = transaction.txid;
-    }
+
     this.transactionRepository.save({
-      txId: txID,
+      txId: transaction,
       fromAddress: wallet.address,
       toAddress: toAddress,
       amount: amount,
       status: 'PENDING',
-      block: transaction.blockNumber,
+      block: 5,
       user: user,
       wallet: wallet,
     });
@@ -186,18 +183,13 @@ export class WalletService {
       const wallets = await this.walletRepository.find({
         where: { userId: user.id },
       });
-      if (user.usdtBalance > 0) {
-        continue;
-      }
 
       let usdtBalance = 0;
       for (const wallet of wallets) {
         const balance = await contract.methods
           .balanceOf(this.tronWeb.address.toHex(wallet.address))
           .call();
-        // Gets 10000n
-        console.log(balance.toString(10));
-        usdtBalance += parseInt(balance.toString(10)) / 1000000;
+        usdtBalance = parseInt(balance.toString(10)) / 1000000;
       }
 
       await this.walletRepository.update(
