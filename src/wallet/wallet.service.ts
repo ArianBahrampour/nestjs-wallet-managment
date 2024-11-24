@@ -170,9 +170,9 @@ export class WalletService {
 
       let usdtBalance = 0;
       for (const wallet of wallets) {
-        if (wallet.hasSuccessfulTransaction) {
-          continue;
-        }
+        // if (wallet.hasSuccessfulTransaction) {
+        //   continue;
+        // }
         const balance = await contract.methods
           .balanceOf(this.tronWeb.address.toHex(wallet.address))
           .call();
