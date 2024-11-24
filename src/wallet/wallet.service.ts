@@ -1,4 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { TronWeb } from 'tronweb';
 import { v4 as uuidv4 } from 'uuid';
@@ -92,11 +97,11 @@ export class WalletService {
       where: { userId: user.id },
     });
     if (!wallet) {
-      throw new UnauthorizedException('Wallet not found');
+      throw new BadRequestException('Wallet not found');
     }
 
     if (user.usdtBalance < amount) {
-      throw new UnauthorizedException('Insufficient balance');
+      throw new BadRequestException('Insufficient balance');
     }
 
     const usdtContractAddress = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
@@ -111,7 +116,7 @@ export class WalletService {
       uuidv4(),
     );
     if (!energy) {
-      throw new UnauthorizedException('Failed to rent energy');
+      throw new BadRequestException('Failed to rent energy');
     }
 
     // Perform the withdrawal
@@ -122,7 +127,7 @@ export class WalletService {
         feeLimit: energyLimit,
         energyLimit: 1000000,
       });
-
+    console.log(transaction);
     this.transactionRepository.save({
       txId: transaction.txid,
       fromAddress: wallet.address,
