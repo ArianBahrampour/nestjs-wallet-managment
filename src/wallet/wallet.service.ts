@@ -158,6 +158,14 @@ export class WalletService {
           { id: transaction.wallet.id },
           { hasSuccessfulTransaction: true },
         );
+        // Upading the USDT balance of the user
+        const user = await this.userRepository.findOne({
+          where: { id: transaction.user.id },
+        });
+        await this.userRepository.update(
+          { id: user.id },
+          { usdtBalance: user.usdtBalance - transaction.amount },
+        );
       }
     }
   }
