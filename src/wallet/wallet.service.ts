@@ -176,7 +176,6 @@ export class WalletService {
         const balance = await contract.methods
           .balanceOf(this.tronWeb.address.toHex(wallet.address))
           .call();
-        console.log(balance);
         usdtBalance += this.tronWeb.toDecimal(balance._hex) / 1000000;
       }
 
@@ -188,7 +187,7 @@ export class WalletService {
           hasSuccessfulTransaction: true,
         },
       );
-
+      console.log(usdtBalance);
       await this.userRepository.update(
         { id: user.id },
         { usdtBalance: usdtBalance },
