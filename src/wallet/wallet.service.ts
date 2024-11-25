@@ -93,15 +93,24 @@ export class WalletService {
     toAddress: string,
     amount: number,
   ): Promise<{ txId: string }> {
-    const wallet = await this.walletRepository.findOne({
+    const wallets = await this.walletRepository.find({
       where: { userId: user.id },
     });
-    if (!wallet) {
+    if (wallets.length === 0) {
       throw new BadRequestException('Wallet not found');
     }
 
     if (user.usdtBalance < amount) {
       throw new BadRequestException('Insufficient balance');
+    }
+
+    let wallet = wallets[0];
+    for (const w of wallets) {
+      const balance = await this.getWalletBalance(w.address);
+      if (balance >= amount) {
+        wallet = w;
+        break;
+      }
     }
 
     const usdtContractAddress = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
@@ -171,6 +180,18 @@ export class WalletService {
     }
   }
 
+  async getWalletBalance(walletAddress: string): Promise<number> {
+    this.tronWeb.setAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t');
+    const usdtContractAddress = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+    const contract = await this.tronWeb.contract().at(usdtContractAddress);
+
+    const balance = await contract.methods
+      .balanceOf(this.tronWeb.address.toHex(walletAddress))
+      .call();
+
+    return parseInt(balance.toString(10)) / 1000000;
+  }
+
   // Cronjob to update the USDT balance of all users
   @Cron(CronExpression.EVERY_MINUTE)
   async updateUSDTBalances(): Promise<void> {
@@ -189,7 +210,8 @@ export class WalletService {
         const balance = await contract.methods
           .balanceOf(this.tronWeb.address.toHex(wallet.address))
           .call();
-        usdtBalance = parseInt(balance.toString(10)) / 1000000;
+
+        usdtBalance += parseInt(balance.toString(10)) / 1000000;
       }
 
       await this.walletRepository.update(
