@@ -110,7 +110,7 @@ export class WalletService {
 
     // Rent energy before initiating the withdrawal
     const energy = await this.energyService.rentEnergy(
-      32000,
+      65000,
       wallet.address,
       '',
       uuidv4(),
