@@ -128,6 +128,8 @@ export class WalletService {
       throw new BadRequestException('Failed to rent energy');
     }
 
+    // Waiting for the energy to be rented
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     // Perform the withdrawal
     this.tronWeb.setPrivateKey(wallet.privateKey);
     const transaction = await contract.methods
