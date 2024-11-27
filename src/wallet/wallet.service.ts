@@ -159,6 +159,18 @@ export class WalletService {
 
     for (const transaction of transactions) {
       const result = await this.tronWeb.trx.getTransaction(transaction.txId);
+      if (
+        result &&
+        result.ret &&
+        (result.ret[0].contractRet === 'FAILED' ||
+          result.ret[0].contractRet === 'REVERT' ||
+          result.ret[0].contractRet === 'OUT_OF_ENERGY')
+      ) {
+        await this.transactionRepository.update(
+          { id: transaction.id },
+          { status: 'FAILED' },
+        );
+      }
       if (result && result.ret && result.ret[0].contractRet === 'SUCCESS') {
         await this.transactionRepository.update(
           { id: transaction.id },
